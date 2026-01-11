@@ -1,4 +1,3 @@
-Here is the updated README.md reflecting the file name changes to multi_gene_panel.py and lig-rep.py.
 
 Single-Cell Wnt Signaling & LRP5/LRP6 Interaction Analysis
 This repository contains Python pipelines for analyzing single-cell RNA sequencing (scRNA-seq) data in tooth development. The code focuses on visualizing gene expression trends across developmental stages (E13.5, E14.5, E16.5) and quantifying LRP5/LRP6 ligand-receptor interactions to investigate compensatory mechanisms.
