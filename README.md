@@ -1,82 +1,81 @@
+# scRNA-seq Analysis Pipeline with scVI Integration
 
-Single-Cell Wnt Signaling & LRP5/LRP6 Interaction Analysis
-This repository contains Python pipelines for analyzing single-cell RNA sequencing (scRNA-seq) data in tooth development. The code focuses on visualizing gene expression trends across developmental stages (E13.5, E14.5, E16.5) and quantifying LRP5/LRP6 ligand-receptor interactions to investigate compensatory mechanisms.
+A complete single-cell RNA sequencing analysis workflow built around scVI for batch correction and imputation. Takes raw 10X Genomics data through QC, clustering, cell type annotation, and ligand-receptor interaction analysis.
 
-📂 Repository Contents
-1. multi_gene_panel.py (formerly better-vis.py)
-Function: End-to-end preprocessing and multi-stage visualization.
+## What it does
 
-Workflow:
+This pipeline handles the full journey from raw count matrices to publication-ready figures:
 
-Ingests raw 10x count matrices for E13.5, E14.5, and E16.5.
+- Quality control filtering (gene counts, UMI counts, mitochondrial content)
+- Batch correction and denoising using scVI deep learning
+- Dimensionality reduction and UMAP visualisation
+- Leiden clustering with automated cell type annotation based on marker genes
+- Ligand-receptor interaction scoring
+- Statistical validation using both imputed and raw count data
 
-Performs QC, normalization, log-transformation, and clustering (Leiden resolution 0.4).
+The code is set up for Wnt signalling analysis but can be adapted to any pathway or gene set of interest.
 
-Renames clusters to biological annotations (e.g., Mesenchyme, Epithelial, Odontoblasts) and standardizes colors across stages.
+## Requirements
 
-Output: Generates a composite figure with UMAPs and Dot Plots for target genes (Lrp6, Lrp5, Wnt10a, Axin2, Msx1).
+Python 3.8+ with:
 
-2. lig-rep.py (formerly lrp6-final.py)
-Function: Generates the final publication-quality figure for Ligand-Receptor analysis.
+```bash
+pip install scanpy scvi-tools matplotlib seaborn pandas numpy scipy
+```
 
-Workflow:
+GPU recommended for scVI training but not required.
 
-Panel A: Scatter plot of Lrp6/Lrp5 co-expression with non-overlapping labels (via adjustText).
+## Data setup
 
-Panel B: Bar charts showing receptor expression dynamics across stages.
+Organise your 10X Genomics outputs by sample/condition:
 
-Panel C: Heatmap of Wnt ligand expression across cell types.
+```
+processed_stages/
+├── Sample1/
+│   ├── matrix.mtx.gz
+│   ├── features.tsv.gz
+│   └── barcodes.tsv.gz
+├── Sample2/
+│   └── ...
+└── Sample3/
+    └── ...
+```
 
-Panel D/E: Comparative bar charts of interaction scores, highlighting shared ligands between LRP6 (primary) and LRP5 (compensatory).
+Update the `SAMPLE_MAP` dictionary in the `Config` class to match your sample names.
 
-Output: Saves a high-resolution figure and prints a text summary of shared ligands for manuscript use.
+## Running
 
-🛠️ Installation
-The scripts require Python 3 and the following dependencies:
+```bash
+python scrnaseq_pipeline.py
+```
 
-Bash
+Takes roughly 30-45 minutes depending on dataset size and hardware.
 
-pip install scanpy matplotlib pandas numpy adjustText
-Note: lig-rep.py attempts to auto-install adjustText if it is missing, but manual installation is recommended.
+## Output
 
-📁 Directory Structure
-Ensure your directory is structured as follows for the scripts to locate input files correctly:
+Results go to `final_manuscript_output/`:
 
-Plaintext
+- `figures/` — QC plots, marker validation, UMAPs, and expression summaries
+- `data/final_processed_revised.h5ad` — complete AnnData object with all annotations and embeddings
 
-.
-├── multi_gene_panel.py          <-- Preprocessing & Basic Vis
-├── lig-rep.py                   <-- Final Interaction Figure
-├── processed_stages/            <-- INPUT for multi_gene_panel.py
-│   ├── E13.5/
-│   ├── E14.5/
-│   └── E16.5/
-├── processed_data/              <-- INPUT for lig-rep.py
-│   └── processed_adata.h5ad     <-- Pre-calculated AnnData object
-└── interactions_FINAL/          <-- INPUT for lig-rep.py
-    └── lrp5_lrp6_interactions.csv
-🚀 Usage
-Step 1: Preprocessing & Gene Panels
-Run multi_gene_panel.py to process the raw stage data and generate the initial visualization panels.
+## Customisation
 
-Bash
+Edit the `Config` class to adjust:
 
-python multi_gene_panel.py
-Output: figures_LRP_MultiGene/final_multi_gene_panel.png
+- **QC thresholds**: `MIN_GENES`, `MIN_CELLS`, `MAX_MT`
+- **scVI parameters**: layer count, latent dimensions, training epochs
+- **Clustering**: Leiden resolution, neighbour count
+- **Gene lists**: update `WNT_LIGANDS`, `WNT_RECEPTORS` for your pathway
+- **Cell type markers**: modify the `MARKERS` dictionary for your tissue
 
-Customization: Edit target_genes in the script to visualize different markers.
+## Statistical approach
 
-Step 2: Final Interaction Figure
-Run lig-rep.py to generate the detailed LRP5 vs LRP6 comparison figure.
+The pipeline computes expression statistics on multiple data representations: scVI-imputed values, standard log-normalised counts, and depth-downsampled counts. This helps distinguish genuine biological signal from technical artefacts like variable sequencing depth across cells.
 
-Bash
+## License
 
-python lig-rep.py
-Output: figures_FINAL/Figure_LRP_Compensation_v2.png (and PDF).
+MIT
 
-Console Output: The script will print a summary of shared ligands (e.g., "Shared ligands targeting BOTH LRP6 and LRP5") to assist in writing results.
+## Contact
 
-⚙️ Configuration Notes
-Cluster Renaming: multi_gene_panel.py contains a dictionary cluster_renaming mapping numeric clusters to cell types. Modify this if your clustering resolution changes.
-
-Interaction Data: lig-rep.py expects a CSV containing columns for receptor, ligand, source, target, and interaction_score. If this file is missing, the script will output a placeholder figure for the interaction panels.
+Open an issue for questions or bugs.
